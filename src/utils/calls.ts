@@ -36,8 +36,12 @@ export const generateURLSearchParams = <T>(
   /** Display */
   if (params && Array.isArray(params.display)) {
     searchParams.set('display', `[${params.display.join(',')}]`);
-  } else if (params && !Array.isArray(params.display)) {
-    searchParams.set('display', params.display || 'full');
+  }  else if (params && !Array.isArray(params.display)) {
+      if(params.display === null){
+          // We passed in an empty object and do not want to have the display full set.
+      } else {
+          searchParams.set('display', params.display || 'full');
+      }
   } else {
     searchParams.set('display', 'full');
   }
@@ -189,6 +193,23 @@ export const generateListCustomURLSearchParams = (
   return searchParams;
 };
 
+export const getSingularEndpoint = (endpoint: Endpoint):Endpoint => {
+  switch (endpoint) {
+    case Endpoint.combinations:
+      return Endpoint.combination;
+    case Endpoint.productOptionValues:
+      return Endpoint.productOptionValue;
+    case Endpoint.productOptions:
+      return Endpoint.productOption;
+    case Endpoint.products:
+      return Endpoint.product;
+    case Endpoint.stockAvailables:
+      return Endpoint.stockAvailable;
+    default:
+      return endpoint;
+  }
+}
+
 /**
  * Directly call the prestashop webservices.
  *
@@ -217,6 +238,40 @@ export const call = async <T>({
     data: body,
     headers,
   }).catch((error: AxiosError<PrestashopErrorResponse<T[]>>) => {
+    return error;
+  });
+
+  return response;
+};
+
+/**
+ * Directly call the prestashop webservices.
+ *
+ * @param param0
+ * @returns
+ */
+export const singleItemCall = async <T>({
+  method,
+  path,
+  params,
+  body,
+  headers,
+  paramsSerializer,
+}: CallParams) => {
+  const { url, key } = config;
+
+  const response = await axios<Record<Endpoint, T>>({
+    method,
+    url: `${url}/api${path}`,
+    params: {
+      ...params,
+      ws_key: key,
+      output_format: 'JSON',
+    },
+    paramsSerializer,
+    data: body,
+    headers,
+  }).catch((error: AxiosError<PrestashopErrorResponse<T>>) => {
     return error;
   });
 
@@ -274,38 +329,34 @@ export const getCall = async <T>(
   id: number | string,
   params: GetParams | undefined = undefined
 ): Promise<PrestashopAPIResponse<T>> => {
-  const searchParams = generateURLSearchParams(params);
-
-  const response = await call<T>({
+  const response = await singleItemCall<T>({
     method: 'GET',
     path: `/${endpoint}/${id}`,
-    paramsSerializer: {
-      serialize: (params) =>
-        `${qs.stringify(params)}&${searchParams.toString()}`,
-    },
+    params
   });
 
   if (isAxiosError(response)) {
     return {
       data:
         response.response?.data &&
-        response.response?.data[endpoint] &&
-        response.response?.data[endpoint].length > 0
-          ? response.response.data[endpoint][0]
+        response.response?.data[getSingularEndpoint(endpoint)]
+          ? response.response.data[getSingularEndpoint(endpoint)]
           : undefined,
       errors: response.response?.data.errors,
     };
   }
 
-  return {
-    data:
-      response.data &&
-      response.data[endpoint] &&
-      response.data[endpoint].length > 0
-        ? response.data[endpoint][0]
-        : undefined,
-    errors: undefined,
-  };
+  if(response.data && response.data[getSingularEndpoint(endpoint)]){
+    return {
+      data: response.data[getSingularEndpoint(endpoint)],
+      errors: undefined
+    }
+  } else {
+    return {
+      data: undefined,
+      errors: undefined
+    }
+  }
 };
 
 /**

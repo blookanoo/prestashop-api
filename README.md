@@ -7,7 +7,7 @@ Access all endpoints offered by Prestashop webservices as well as custom routes 
 ## Installation
 
 ```bash
-npm install @kasual-business/prestashop-api
+npm install @blookanoo/prestashop-api
 ```
 
 ## Usage/Examples

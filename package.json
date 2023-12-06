@@ -1,16 +1,15 @@
 {
-  "name": "@kasual-business/prestashop-api",
-  "version": "1.4.9",
-  "description": "Prestashop node API",
+  "name": "@blookanoo/integration-p-sp",
+  "version": "1.4.14",
+  "description": "Node API for integration with 1.7.5",
   "keywords": [
-    "prestashop",
     "node",
     "api",
     "typescript"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/KasualBusiness/prestashop-api.git"
+    "url": "https://github.com/blookanoo/prestashop-api.git"
   },
   "exports": {
     ".": {
@@ -41,7 +40,7 @@
     "test": "vitest",
     "prepublish": "npm run build"
   },
-  "author": "Kasual Business",
+  "author": "BlooKanoo",
   "license": "MIT",
   "devDependencies": {
     "@types/qs": "^6.9.7",
